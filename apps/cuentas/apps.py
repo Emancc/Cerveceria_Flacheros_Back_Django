@@ -1,0 +1,13 @@
+"""Configuración de la app `cuentas`."""
+
+from django.apps import AppConfig
+
+
+class CuentasConfig(AppConfig):
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "apps.cuentas"
+    verbose_name = "Cuentas"
+
+    def ready(self):
+        # Registrar las señales de creación automática de perfiles.
+        from . import signals  # noqa: F401

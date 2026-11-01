@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Cervecería Los Flacheros · API</title>
+    <style>
+        :root {
+            --fondo: #141210;
+            --fondo-tarjeta: #1f1b17;
+            --borde: #3a3027;
+            --ambar: #f0b429;
+            --ambar-suave: #ffd166;
+            --texto: #f5e6c8;
+            --texto-suave: #b9a98f;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+            color: var(--texto);
+            background:
+                radial-gradient(circle at 15% 0%, #3a2a12 0%, transparent 45%),
+                radial-gradient(circle at 90% 100%, #2a1d0c 0%, transparent 40%),
+                var(--fondo);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 3rem 1.25rem 2rem;
+        }
+
+        main {
+            width: 100%;
+            max-width: 64rem;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .marca {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.85rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--ambar);
+            font-weight: 600;
+        }
+
+        .marca::before,
+        .marca::after {
+            content: "";
+            width: 2rem;
+            height: 1px;
+            background: var(--borde);
+        }
+
+        h1 {
+            font-size: clamp(2rem, 5vw, 3.25rem);
+            line-height: 1.1;
+            margin: 1rem 0 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        h1 span {
+            color: var(--ambar);
+        }
+
+        .bajada {
+            max-width: 38rem;
+            margin: 0 auto;
+            color: var(--texto-suave);
+            line-height: 1.7;
+            font-size: 1.05rem;
+        }
+
+        .estado {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+            padding: 0.4rem 0.9rem;
+            border: 1px solid var(--borde);
+            border-radius: 999px;
+            background: rgba(240, 180, 41, 0.08);
+            color: var(--ambar-suave);
+            font-size: 0.85rem;
+        }
+
+        .punto {
+            width: 0.5rem;
+            height: 0.5rem;
+            border-radius: 50%;
+            background: #4ade80;
+            box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.18);
+        }
+
+        .tarjetas {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+            gap: 1rem;
+        }
+
+        .tarjeta {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            padding: 1.5rem;
+            border: 1px solid var(--borde);
+            border-radius: 1rem;
+            background: linear-gradient(160deg, var(--fondo-tarjeta), #191512);
+            color: inherit;
+            text-decoration: none;
+            transition: transform 0.18s ease, border-color 0.18s ease;
+        }
+
+        .tarjeta:hover,
+        .tarjeta:focus-visible {
+            transform: translateY(-3px);
+            border-color: var(--ambar);
+            outline: none;
+        }
+
+        .icono {
+            font-size: 1.6rem;
+            line-height: 1;
+        }
+
+        .tarjeta h2 {
+            margin: 0;
+            font-size: 1.05rem;
+        }
+
+        .tarjeta p {
+            margin: 0;
+            color: var(--texto-suave);
+            font-size: 0.9rem;
+            line-height: 1.55;
+        }
+
+        .ruta {
+            margin-top: auto;
+            padding-top: 0.5rem;
+            color: var(--ambar);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 0.82rem;
+        }
+
+        footer {
+            margin-top: 3rem;
+            color: var(--texto-suave);
+            font-size: 0.8rem;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        footer code {
+            color: var(--ambar-suave);
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <section class="hero">
+            <div class="marca">EFI · Ingeniería de Software</div>
+            <h1>Cervecería <span>Los Flacheros</span></h1>
+            <p class="bajada">
+                API REST para la gestión del catálogo de cervezas, recetas,
+                lotes de producción, clientes y pedidos. Construida con Django
+                y Django REST Framework.
+            </p>
+            <div class="estado">
+                <span class="punto"></span>
+                Backend operativo
+            </div>
+        </section>
+
+        <section class="tarjetas" aria-label="Accesos">
+            <a class="tarjeta" href="/api/">
+                <span class="icono" aria-hidden="true">🍺</span>
+                <h2>API raíz</h2>
+                <p>Explorador navegable con todos los recursos disponibles.</p>
+                <span class="ruta">/api/</span>
+            </a>
+
+            <a class="tarjeta" href="/api/docs/">
+                <span class="icono" aria-hidden="true">📘</span>
+                <h2>Swagger UI</h2>
+                <p>Documentación interactiva para probar los endpoints.</p>
+                <span class="ruta">/api/docs/</span>
+            </a>
+
+            <a class="tarjeta" href="/api/redoc/">
+                <span class="icono" aria-hidden="true">📖</span>
+                <h2>ReDoc</h2>
+                <p>Referencia de la API con el contrato OpenAPI detallado.</p>
+                <span class="ruta">/api/redoc/</span>
+            </a>
+
+            <a class="tarjeta" href="/admin/">
+                <span class="icono" aria-hidden="true">⚙️</span>
+                <h2>Administración</h2>
+                <p>Panel para gestionar productos, ventas y usuarios.</p>
+                <span class="ruta">/admin/</span>
+            </a>
+        </section>
+
+        <footer>
+            Django · Django REST Framework · JWT<br>
+            Esquema OpenAPI en <code>/api/schema/</code>
+        </footer>
+    </main>
+</body>
+</html>

@@ -1,0 +1,37 @@
+# Entorno virtual y dependencias
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Django
+db.sqlite3
+db.sqlite3-journal
+/staticfiles/
+/media/
+*.log
+local_settings.py
+
+# Variables de entorno y secretos
+.env
+.env.*
+!.env.example
+
+# Herramientas
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# Editores / sistema
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
