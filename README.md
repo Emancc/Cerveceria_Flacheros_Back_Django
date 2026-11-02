@@ -18,7 +18,6 @@ documentación OpenAPI.
 | <!-- completar --> | <!-- completar --> | <!-- completar --> |
 | <!-- completar --> | <!-- completar --> | <!-- completar --> |
 | <!-- completar --> | <!-- completar --> | <!-- completar --> |
-| <!-- completar --> | <!-- completar --> | <!-- completar --> |
 
 > Completar esta tabla antes de la entrega. El repositorio y la gestión de
 > ramas los administra el grupo.

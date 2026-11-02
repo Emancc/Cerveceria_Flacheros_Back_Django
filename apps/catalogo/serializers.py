@@ -15,7 +15,6 @@ from .models import (
 
 
 def _url_imagen(obj, contexto) -> str:
-    """URL absoluta del archivo subido o, si no hay, la URL externa."""
     if obj.imagen_archivo:
         request = contexto.get("request")
         url = obj.imagen_archivo.url
@@ -41,7 +40,6 @@ class EstiloSerializer(serializers.ModelSerializer):
 
 
 class CervezaSerializer(serializers.ModelSerializer):
-    """Serializer plano: `estilo` se expone como slug (lectura y escritura)."""
 
     estilo = serializers.SlugRelatedField(
         slug_field="slug",
@@ -81,9 +79,7 @@ class CervezaSerializer(serializers.ModelSerializer):
         if not value:
             return value
         if not value.startswith("cervezas/"):
-            raise serializers.ValidationError(
-                "La ruta debe comenzar con 'cervezas/'."
-            )
+            raise serializers.ValidationError("La ruta debe comenzar con 'cervezas/'.")
         if not default_storage.exists(value):
             raise serializers.ValidationError(
                 "No existe un archivo de imagen en la ruta indicada."
@@ -98,7 +94,6 @@ class CervezaSerializer(serializers.ModelSerializer):
 
 
 class CervezaListSerializer(serializers.ModelSerializer):
-    """Serializer de listado: `estilo` slug y `estilo_detalle` anidado."""
 
     estilo = serializers.SlugRelatedField(slug_field="slug", read_only=True)
     estilo_detalle = EstiloSerializer(source="estilo", read_only=True)
@@ -188,8 +183,6 @@ class IngredienteSerializer(serializers.ModelSerializer):
 
 
 class IngredienteListSerializer(IngredienteSerializer):
-    """Serializer de listado: `proveedor` anidado como objeto."""
-
     proveedor = ProveedorSerializer(read_only=True)
 
 
@@ -244,7 +237,6 @@ class RecetaResumenSerializer(serializers.ModelSerializer):
 
 
 class RecetaListSerializer(RecetaSerializer):
-    """Serializer de listado con cerveza e ingredientes anidados."""
 
     cerveza = CervezaResumenSerializer(read_only=True)
     ingredientes = RecetaIngredienteSerializer(many=True, read_only=True)
