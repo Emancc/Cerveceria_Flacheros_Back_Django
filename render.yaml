@@ -28,6 +28,6 @@ services:
           name: cerveceria-flacheros-db
           property: connectionString
       - key: CORS_ALLOWED_ORIGINS
-        value: https://flacheros-frontend.vercel.app
+        value: https://cervecerialf.vercel.app
       - key: CSRF_TRUSTED_ORIGINS
-        value: https://flacheros-frontend.vercel.app
+        value: https://cervecerialf.vercel.app
