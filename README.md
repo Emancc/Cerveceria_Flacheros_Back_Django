@@ -1,66 +1,83 @@
 # Cervecería Los Flacheros — Backend Django
 
-Backend del EFI **Cervecería Los Flacheros**, un sistema de gestión para una
-cervecería artesanal de Córdoba. El proyecto cubre dos frentes:
+Backend del sistema de gestión de **Cervecería Los Flacheros**, una cervecería artesanal de Córdoba. Expone una API REST para el catálogo público y para la administración de producción, ventas, clientes y usuarios.
 
-- **Sitio público**: catálogo de cervezas, estilos, reseñas y pedidos.
-- **Panel interno**: administración de producción (recetas, ingredientes,
-  lotes), ventas (clientes, pedidos) y usuarios.
-
-Expone una **API REST** pensada para el frontend **Next.js** del equipo, con
-autenticación JWT y sesión, paginación, filtros, búsqueda, ordenamiento y
-documentación OpenAPI.
+La API está preparada para integrarse con el frontend desarrollado en Next.js e incluye autenticación JWT y por sesión, paginación, filtros, búsqueda, ordenamiento y documentación OpenAPI.
 
 ## Integrantes
 
-| Nombre y apellido | Legajo | Rol |
-|---|---|---|
-| <!-- completar --> | <!-- completar --> | <!-- completar --> |
-| <!-- completar --> | <!-- completar --> | <!-- completar --> |
-| <!-- completar --> | <!-- completar --> | <!-- completar --> |
+- Emanuel Cepeda Caceres
+- Federico Ezequiel Arballo
 
-> Completar esta tabla antes de la entrega. El repositorio y la gestión de
-> ramas los administra el grupo.
+## Proyecto publicado
 
-## Stack y versiones
+El backend se encuentra desplegado en Render. Desde la instancia publicada se puede acceder a la API y a sus herramientas de documentación.
+
+- **Backend:** https://cerveceria-flacheros-back-django-1.onrender.com/
+- **API:** https://cerveceria-flacheros-back-django-1.onrender.com/api/
+- **Swagger UI:** https://cerveceria-flacheros-back-django-1.onrender.com/api/docs/
+- **OpenAPI:** https://cerveceria-flacheros-back-django-1.onrender.com/api/schema/
+- **ReDoc:** https://cerveceria-flacheros-back-django-1.onrender.com/api/redoc/
+- **Panel de administración:** https://cerveceria-flacheros-back-django-1.onrender.com/admin/
+- **Frontend:** https://cervecerialf.vercel.app/
+- **Repositorio:** https://github.com/Emancc/Cerveceria_Flacheros_Back_Django
+
+
+## Tecnologías
 
 | Tecnología | Versión | Uso |
-|---|---|---|
-| Python | 3.12.11 | Lenguaje |
+|---|---:|---|
+| Python | 3.12 | Lenguaje |
 | Django | 6.1.2 | Framework web |
 | Django REST Framework | 3.18.3 | API REST |
 | SimpleJWT | 5.5.1 | Autenticación JWT |
-| drf-spectacular | 0.30.0 | OpenAPI, Swagger y ReDoc |
-| django-filter | 26.2 | Filtros de querystring |
-| django-cors-headers | 4.9.0 | CORS para el frontend |
+| drf-spectacular | 0.30.0 | Esquema OpenAPI, Swagger y ReDoc |
+| django-filter | 26.2 | Filtros de consulta |
+| django-cors-headers | 4.9.0 | Configuración CORS |
 | django-environ | 0.14.0 | Variables de entorno |
-| psycopg | 3.3.6 | Driver PostgreSQL |
-| Gunicorn | 26.2.0 | Servidor WSGI de producción |
+| Pillow | 13.0.0 | Validación y procesamiento de imágenes |
+| psycopg | 3.3.6 | Conexión con PostgreSQL |
+| Gunicorn | 26.2.0 | Servidor WSGI |
 | WhiteNoise | 6.12.0 | Archivos estáticos en producción |
-| uv | 0.12.5 | Gestión de dependencias y entorno |
-| SQLite | — | Base de datos de desarrollo/tests |
-| PostgreSQL | 16 | Base de datos de Docker/producción |
-| Docker + Compose | — | Contenedores |
+| uv | — | Gestión de dependencias y entorno |
+| SQLite | — | Base de datos local y de tests por defecto |
+| PostgreSQL | 16 | Base de datos para Docker y despliegue |
+| Docker Compose | — | Orquestación de contenedores |
 
-## Arquitectura de apps
+Las dependencias se encuentran declaradas en `pyproject.toml` y `uv.lock`. También se incluye `requirements.txt` para instalaciones mediante pip.
 
-| App | Responsabilidad |
+## Arquitectura
+
+El backend está organizado en aplicaciones Django:
+
+| Aplicación | Responsabilidad |
 |---|---|
-| `apps/cuentas` | Usuario custom autenticado por email, perfiles y roles. |
-| `apps/catalogo` | Estilos, cervezas, proveedores, ingredientes, recetas y lotes. |
-| `apps/ventas` | Clientes, pedidos, detalles de pedido y reseñas. |
-| `apps/core` | Modelo abstracto con fechas, paginación estándar y `seed_demo`. |
-| `config` | Settings por entorno, URLs raíz y router de la API. |
+| `apps/cuentas` | Usuario personalizado autenticado por email, perfiles y roles. |
+| `apps/catalogo` | Estilos, cervezas, proveedores, ingredientes, recetas y lotes de producción. |
+| `apps/ventas` | Clientes, pedidos, detalles de pedidos y reseñas. |
+| `apps/core` | Modelo abstracto con fechas, paginación y comando de carga de datos de demostración. |
+| `config` | Rutas, router de la API y configuración por entorno. |
 
-## Diagrama de la base de datos
+## Modelo de datos
 
-El modelo de datos tiene **13 entidades**: los 11 modelos de dominio más
-`Usuario` y `PerfilUsuario`. Las relaciones incluyen FK, 1:1 y la relación
-muchos-a-muchos entre recetas e ingredientes resuelta con la tabla intermedia
-`RecetaIngrediente`.
+El sistema contiene 13 entidades: 11 modelos de dominio, `Usuario` y `PerfilUsuario`. Las recetas se relacionan con los ingredientes mediante el modelo intermedio `RecetaIngrediente`.
 
 ```mermaid
 erDiagram
+    USUARIO ||--|| PERFIL_USUARIO : tiene
+    ESTILO ||--o{ CERVEZA : clasifica
+    CERVEZA ||--o{ RECETA : tiene
+    RECETA ||--o{ RECETA_INGREDIENTE : contiene
+    INGREDIENTE ||--o{ RECETA_INGREDIENTE : participa
+    CERVEZA ||--o{ LOTE : produce
+    RECETA ||--o{ LOTE : utiliza
+    PROVEEDOR ||--o{ INGREDIENTE : provee
+    CLIENTE ||--o{ PEDIDO : realiza
+    PEDIDO ||--o{ DETALLE_PEDIDO : contiene
+    CERVEZA ||--o{ DETALLE_PEDIDO : incluye
+    CLIENTE ||--o{ RESENA : escribe
+    CERVEZA ||--o{ RESENA : recibe
+
     USUARIO {
         int id PK
         string email UK
@@ -95,6 +112,7 @@ erDiagram
         decimal precio
         int stock
         string imagen
+        string imagen_archivo
         string color
         bool activo
     }
@@ -115,7 +133,7 @@ erDiagram
         string unidad
         decimal stock
         decimal stock_minimo
-        int proveedor_id FK "nullable"
+        int proveedor_id FK
     }
     RECETA {
         int id PK
@@ -136,10 +154,10 @@ erDiagram
     LOTE {
         int id PK
         int cerveza_id FK
-        int receta_id FK "nullable"
+        int receta_id FK
         string codigo UK
         date fecha_elaboracion
-        date fecha_vencimiento "nullable"
+        date fecha_vencimiento
         decimal volumen_litros
         string estado
         string observaciones
@@ -177,65 +195,71 @@ erDiagram
         string comentario
         datetime creado_en
     }
-
-    USUARIO ||--|| PERFIL_USUARIO : "tiene"
-    ESTILO ||--o{ CERVEZA : "clasifica"
-    CERVEZA ||--o{ RECETA : "tiene"
-    RECETA ||--o{ RECETA_INGREDIENTE : "contiene"
-    INGREDIENTE ||--o{ RECETA_INGREDIENTE : "usado_en"
-    CERVEZA ||--o{ LOTE : "produce"
-    RECETA ||--o{ LOTE : "usa"
-    PROVEEDOR ||--o{ INGREDIENTE : "provee"
-    CLIENTE ||--o{ PEDIDO : "realiza"
-    PEDIDO ||--o{ DETALLE_PEDIDO : "contiene"
-    CERVEZA ||--o{ DETALLE_PEDIDO : "vendida_en"
-    CLIENTE ||--o{ RESENA : "escribe"
-    CERVEZA ||--o{ RESENA : "recibe"
 ```
 
-## Endpoints de la API
+## API REST
 
-Base: `http://localhost:8000`. Todas las rutas de datos cuelgan de `/api/`.
-La lectura de estilos y cervezas es pública; el resto requiere token.
+La URL base local es `http://localhost:8000`. Los recursos de la API se encuentran bajo `/api/`.
 
-| Método | Ruta | Auth | Descripción |
+### Autenticación y perfiles
+
+| Método | Ruta | Acceso | Descripción |
 |---|---|---|---|
-| POST | `/api/token/` | Público | Obtiene `access` y `refresh` con email y contraseña. |
-| POST | `/api/token/refresh/` | Público | Renueva el `access` a partir del `refresh`. |
-| GET | `/api/auth/me/` | Token | Devuelve `{usuario, perfil}` del usuario autenticado. |
-| GET | `/api/perfiles/` | Token | Staff ve todos; usuario común solo el propio. |
-| GET | `/api/perfiles/{id}/` | Token | Detalle de perfil (con la misma restricción). |
-| GET, POST | `/api/estilos/` | Público / Token | Lista y alta de estilos. |
-| GET, PUT, PATCH, DELETE | `/api/estilos/{id}/` | Público / Token | Detalle, edición y baja. |
-| GET, POST | `/api/cervezas/` | Público / Token | Lista paginada y alta de cervezas. |
-| GET, PUT, PATCH, DELETE | `/api/cervezas/{id}/` | Público / Token | Detalle, edición y baja. |
-| GET | `/api/cervezas/estadisticas/` | Token | `{total, estilos, stockTotal, precioPromedio}`. |
-| GET | `/api/cervezas/bajo-stock/?umbral=10` | Token | Cervezas con `stock < umbral`, paginadas. |
-| GET, POST | `/api/proveedores/` | Token | Lista y alta de proveedores. |
-| GET, PUT, PATCH, DELETE | `/api/proveedores/{id}/` | Token | Detalle, edición y baja. |
-| GET, POST | `/api/ingredientes/` | Token | Lista y alta de ingredientes. |
-| GET, PUT, PATCH, DELETE | `/api/ingredientes/{id}/` | Token | Detalle, edición y baja. |
-| GET, POST | `/api/recetas/` | Token | Lista y alta de recetas. |
-| GET, PUT, PATCH, DELETE | `/api/recetas/{id}/` | Token | Detalle, edición y baja. |
-| GET, POST | `/api/lotes/` | Token | Lista y alta de lotes. |
-| GET, PUT, PATCH, DELETE | `/api/lotes/{id}/` | Token | Detalle, edición y baja. |
-| POST | `/api/lotes/{id}/finalizar/` | Token | Pasa el lote a `envasado` y asigna vencimiento. |
-| GET, POST | `/api/clientes/` | Token | Lista y alta de clientes. |
-| GET, PUT, PATCH, DELETE | `/api/clientes/{id}/` | Token | Detalle, edición y baja. |
-| GET, POST | `/api/pedidos/` | Token | Lista y alta de pedidos. |
-| GET, PUT, PATCH, DELETE | `/api/pedidos/{id}/` | Token | Detalle, edición y baja. |
-| POST | `/api/pedidos/{id}/cambiar-estado/` | Token | Cambia el estado validando las choices. |
-| GET, POST | `/api/detalles-pedido/` | Token | Lista y alta de líneas de pedido. |
-| GET, PUT, PATCH, DELETE | `/api/detalles-pedido/{id}/` | Token | Detalle, edición y baja. |
-| GET, POST | `/api/resenas/` | Token | Lista y alta de reseñas. |
-| GET, PUT, PATCH, DELETE | `/api/resenas/{id}/` | Token | Detalle, edición y baja. |
-| GET | `/api/schema/` | Público | Esquema OpenAPI en YAML. |
-| GET | `/api/docs/` | Público | Swagger UI interactivo. |
-| GET | `/api/redoc/` | Público | ReDoc. |
-| GET | `/` | Público | Vista de bienvenida con accesos. |
-| GET | `/admin/` | Sesión | Panel de administración. |
+| POST | `/api/token/` | Público | Obtiene los tokens `access` y `refresh` mediante email y contraseña. |
+| POST | `/api/token/refresh/` | Público | Renueva el token de acceso. |
+| GET | `/api/auth/me/` | Autenticado | Devuelve los datos del usuario y su perfil. |
+| GET | `/api/perfiles/` | Autenticado | Lista perfiles. El personal staff puede consultar todos; los demás usuarios solo el propio. |
+| GET | `/api/perfiles/{id}/` | Autenticado | Devuelve un perfil respetando la misma restricción de acceso. |
 
-### Respuesta paginada
+### Catálogo y producción
+
+| Método | Ruta | Acceso | Descripción |
+|---|---|---|---|
+| GET, POST | `/api/estilos/` | GET público; POST autenticado | Lista y crea estilos. |
+| GET, PUT, PATCH, DELETE | `/api/estilos/{id}/` | GET público; escritura autenticada | Consulta, modifica o elimina un estilo. |
+| GET, POST | `/api/cervezas/` | GET público; POST autenticado | Lista y crea cervezas. |
+| GET, PUT, PATCH, DELETE | `/api/cervezas/{id}/` | GET público; escritura autenticada | Consulta, modifica o elimina una cerveza. |
+| GET | `/api/cervezas/estadisticas/` | Autenticado | Devuelve totales, cantidad de estilos, stock total y precio promedio. |
+| GET | `/api/cervezas/bajo-stock/?umbral=10` | Autenticado | Lista cervezas con stock inferior al umbral indicado. El valor predeterminado es 10. |
+| POST | `/api/cervezas/imagenes/` | Staff autenticado | Recibe y valida una imagen de cerveza. |
+| GET, POST | `/api/proveedores/` | Autenticado | Lista y crea proveedores. |
+| GET, PUT, PATCH, DELETE | `/api/proveedores/{id}/` | Autenticado | Consulta, modifica o elimina un proveedor. |
+| GET, POST | `/api/ingredientes/` | Autenticado | Lista y crea ingredientes. |
+| GET, PUT, PATCH, DELETE | `/api/ingredientes/{id}/` | Autenticado | Consulta, modifica o elimina un ingrediente. |
+| GET, POST | `/api/recetas/` | Autenticado | Lista y crea recetas. |
+| GET, PUT, PATCH, DELETE | `/api/recetas/{id}/` | Autenticado | Consulta, modifica o elimina una receta. |
+| GET, POST | `/api/lotes/` | Autenticado | Lista y crea lotes de producción. |
+| GET, PUT, PATCH, DELETE | `/api/lotes/{id}/` | Autenticado | Consulta, modifica o elimina un lote. |
+| POST | `/api/lotes/{id}/finalizar/` | Autenticado | Cambia el lote al estado `envasado` y asigna vencimiento a 30 días si todavía no tiene uno. |
+
+### Ventas y clientes
+
+| Método | Ruta | Acceso | Descripción |
+|---|---|---|---|
+| GET, POST | `/api/clientes/` | Autenticado | Lista y crea clientes. |
+| GET, PUT, PATCH, DELETE | `/api/clientes/{id}/` | Autenticado | Consulta, modifica o elimina un cliente. |
+| GET, POST | `/api/pedidos/` | Autenticado | Lista y crea pedidos. |
+| GET, PUT, PATCH, DELETE | `/api/pedidos/{id}/` | Autenticado | Consulta, modifica o elimina un pedido. |
+| POST | `/api/pedidos/{id}/cambiar-estado/` | Autenticado | Cambia el estado del pedido validando los valores permitidos. |
+| GET, POST | `/api/detalles-pedido/` | Autenticado | Lista y crea detalles de pedidos. |
+| GET, PUT, PATCH, DELETE | `/api/detalles-pedido/{id}/` | Autenticado | Consulta, modifica o elimina un detalle. |
+| GET, POST | `/api/resenas/` | Autenticado | Lista y crea reseñas. |
+| GET, PUT, PATCH, DELETE | `/api/resenas/{id}/` | Autenticado | Consulta, modifica o elimina una reseña. |
+
+### Documentación y vistas
+
+| Método | Ruta | Acceso | Descripción |
+|---|---|---|---|
+| GET | `/` | Público | Página de bienvenida. |
+| GET | `/api/` | Según permisos de los recursos | API navegable de Django REST Framework. |
+| GET | `/api/schema/` | Público | Esquema OpenAPI en YAML. |
+| GET | `/api/docs/` | Público | Interfaz Swagger UI. |
+| GET | `/api/redoc/` | Público | Documentación ReDoc. |
+| GET | `/admin/` | Sesión | Panel de administración de Django. |
+
+### Formato de respuesta paginada
+
+La paginación utiliza `page` y `page_size`. El tamaño predeterminado es 10 registros y el máximo permitido es 100.
 
 ```json
 {
@@ -246,28 +270,24 @@ La lectura de estilos y cervezas es pública; el resto requiere token.
 }
 ```
 
-### Serialización anidada
+### Serialización de listados y detalles
 
-Los viewsets con anidamiento **solo en list** son: `Ingrediente` (`proveedor`),
-`Receta` (`cerveza` e `ingredientes`), `Lote` (`cerveza` y `receta`),
-`Pedido` (`cliente` y `detalles`), `Reseña` (`cerveza` y `cliente`) y
-`Cerveza` (`estilo_detalle`).
+Algunos recursos utilizan serializers específicos para los listados. En esos casos, la respuesta de listado puede incluir relaciones anidadas, mientras que el detalle y las operaciones de escritura utilizan una representación más simple.
 
-- **Listados**: `cervezas` devuelve `estilo` como **string slug** y
-  `estilo_detalle` como objeto anidado; `pedidos` devuelve `cliente` y
-  `detalles` anidados; `recetas` devuelve `cerveza` e `ingredientes`; `lotes`
-  devuelve `cerveza` y `receta`; `resenas` devuelve `cerveza` y `cliente`;
-  `ingredientes` devuelve `proveedor`.
-- **Detalle y escritura**: se usan serializers planos. En cervezas, `estilo`
-  es siempre el **slug** (`"ipa"`), no un id ni un objeto. Esto mantiene
-  compatibilidad con el catálogo del frontend Next.js.
+- **Cervezas:** `estilo` se representa mediante el slug. En el listado también se incluye `estilo_detalle`.
+- **Ingredientes:** el listado incluye el proveedor anidado.
+- **Recetas:** el listado incluye la cerveza y los ingredientes asociados.
+- **Lotes:** el listado incluye información relacionada de cerveza y receta.
+- **Pedidos:** el listado incluye cliente y detalles del pedido.
+- **Reseñas:** el listado incluye cerveza y cliente.
 
-## Autenticación
+En los detalles y operaciones de escritura se utilizan los serializers correspondientes a cada recurso, con referencias mediante identificadores o slugs según el campo.
 
-La API acepta **JWT** (para el frontend) y **sesión de Django** (para la API
-navegable y el admin).
+## Autenticación y permisos
 
-### Obtener el token
+La API admite autenticación JWT y autenticación por sesión de Django.
+
+### Obtener tokens
 
 ```bash
 curl -X POST http://localhost:8000/api/token/ \
@@ -275,49 +295,49 @@ curl -X POST http://localhost:8000/api/token/ \
   -d '{"email": "admin@flacheros.com", "password": "admin12345"}'
 ```
 
-Respuesta:
+La respuesta contiene los tokens `access` y `refresh`:
 
 ```json
 {
-  "access": "<token de acceso>",
-  "refresh": "<token de refresco>"
+  "access": "<token_de_acceso>",
+  "refresh": "<token_de_refresco>"
 }
 ```
 
-El `access` dura 8 horas y el `refresh` 1 día (configurable en
-`SIMPLE_JWT`).
+La duración configurada es de **8 horas** para `access` y **1 día** para `refresh`.
 
-### Usar el token
+### Enviar el token
 
 ```bash
 curl http://localhost:8000/api/cervezas/ \
   -H "Authorization: Bearer <access>"
 ```
 
-### Refrescar el token
+### Renovar el token
 
 ```bash
 curl -X POST http://localhost:8000/api/token/refresh/ \
   -H "Content-Type: application/json" \
-  -d '{"refresh": "<refresh>"}'
+  -d '{"refresh": "<token_de_refresco>"}'
 ```
 
-### Sesión
+### Permisos
 
-La API navegable (`/api/`) y el admin (`/admin/`) usan la sesión de Django.
-Iniciá sesión en `/admin/login/` y el navegador enviará la cookie de sesión.
+- Los endpoints de lectura de estilos y cervezas son públicos.
+- La creación, modificación y eliminación de estilos y cervezas requieren autenticación.
+- Los demás recursos requieren autenticación.
+- La carga de imágenes requiere un usuario autenticado con `is_staff=True`.
+- Los usuarios comunes solo pueden consultar su propio perfil; los usuarios staff pueden consultar todos los perfiles.
+- El panel `/admin/` utiliza la sesión de Django.
 
-## Paginación, filtros, búsqueda y ordering
+## Paginación, filtros, búsqueda y ordenamiento
 
-- Paginación global: `page` y `page_size` (máximo 100; por defecto 10).
-- Búsqueda: `search=<texto>`.
-- Ordenamiento: `ordering=<campo>` o `ordering=-<campo>`.
-- Los filtros se combinan con `&`.
+Los filtros se combinan mediante parámetros de query string. La búsqueda utiliza `search` y el ordenamiento utiliza `ordering`. Para ordenar en forma descendente se antepone `-` al campo.
 
-| Recurso | `search` | Filtros | `ordering` |
+| Recurso | Búsqueda (`search`) | Filtros | Ordenamiento (`ordering`) |
 |---|---|---|---|
 | Estilos | `nombre`, `slug` | — | `nombre` |
-| Cervezas | `nombre`, `descripcion`, `estilo__nombre` | `estilo` (slug), `activo`, `graduacion_min`, `graduacion_max`, `precio_min`, `precio_max` | `nombre`, `precio`, `stock`, `graduacion`, `amargor`, `creado_en` |
+| Cervezas | `nombre`, `descripcion`, `estilo__nombre` | `estilo`, `activo`, `graduacion_min`, `graduacion_max`, `precio_min`, `precio_max` | `nombre`, `precio`, `stock`, `graduacion`, `amargor`, `creado_en` |
 | Proveedores | `nombre`, `contacto`, `email`, `cuit` | `activo` | `nombre` |
 | Ingredientes | `nombre`, `proveedor__nombre` | `tipo`, `unidad`, `proveedor`, `bajo_minimo` | `nombre`, `stock` |
 | Recetas | `nombre`, `cerveza__nombre` | `cerveza`, `activa` | `nombre`, `version`, `creado_en` |
@@ -327,272 +347,278 @@ Iniciá sesión en `/admin/login/` y el navegador enviará la cookie de sesión.
 | Detalles de pedido | `cerveza__nombre`, `pedido__cliente__nombre` | `pedido`, `cerveza` | `pedido`, `cantidad` |
 | Reseñas | `cerveza__nombre`, `cliente__nombre`, `comentario` | `cerveza`, `cliente`, `puntuacion_min` | `puntuacion`, `creado_en` |
 
-Ejemplo:
+`bajo_minimo` acepta `true` o `false` y compara el stock del ingrediente con su stock mínimo. Los parámetros `fecha_desde` y `fecha_hasta` filtran por fecha de elaboración en lotes y por fecha del pedido en pedidos.
+
+Ejemplo de consulta:
 
 ```bash
-curl "http://localhost:8000/api/cervezas/?search=valle&estilo=ipa&ordering=-precio&page=1&page_size=2"
+curl "http://localhost:8000/api/cervezas/?search=valle&estilo=ipa&ordering=-precio&page=1&page_size=10"
 ```
 
-`bajo_minimo` acepta `true`/`false` y compara `stock < stock_minimo`.
-`fecha_desde` y `fecha_hasta` se aplican sobre `fecha_elaboracion` en lotes y
-sobre `fecha_pedido` en pedidos.
+## Gestión de imágenes de cervezas
 
-## Documentación
+El modelo `Cerveza` admite dos alternativas para la imagen:
 
-- **OpenAPI**: `/api/schema/`
-- **Swagger UI**: `/api/docs/`
-- **ReDoc**: `/api/redoc/`
-- **API navegable**: `/api/`
+- `imagen`: URL de una imagen externa.
+- `imagen_archivo`: ruta de un archivo almacenado por el backend.
 
-El esquema se genera con drf-spectacular y se valida en cada verificación.
+El campo `imagen_url` devuelve la URL que debe utilizar el frontend. Si existe un archivo asociado, se utiliza ese archivo; en caso contrario, se utiliza la URL del campo `imagen`.
 
-## Puesta en marcha local
+### Subir una imagen
 
-Requisitos: Python 3.12, [uv](https://docs.astral.sh/uv/) y, opcionalmente,
-Docker.
+El endpoint `POST /api/cervezas/imagenes/` recibe contenido `multipart/form-data` con el archivo en el campo `imagen`.
 
 ```bash
-# 1. Clonar e ingresar
-git clone <url-del-repo>
+curl -X POST http://localhost:8000/api/cervezas/imagenes/ \
+  -H "Authorization: Bearer <access>" \
+  -F "imagen=@./cerveza.jpg"
+```
+
+La carga requiere un usuario staff autenticado. Se aplican las siguientes validaciones:
+
+- Formatos permitidos: JPEG, PNG y WEBP.
+- Tamaño máximo: 5 MB.
+- Dimensiones mínimas: 200 × 200 píxeles.
+- El archivo debe ser una imagen válida.
+
+La respuesta incluye `ruta` y `url`. Para asociar el archivo a una cerveza, se envía el valor de `ruta` en el campo `imagen_archivo` al crear o actualizar el recurso.
+
+## Instalación y ejecución local
+
+### Requisitos
+
+- Python 3.12 o superior.
+- [uv](https://docs.astral.sh/uv/) para instalar las dependencias y administrar el entorno.
+- Git para clonar el repositorio.
+- Docker y Docker Compose, si se desea utilizar PostgreSQL en contenedores.
+
+### Preparar el entorno
+
+```bash
+git clone https://github.com/Emancc/Cerveceria_Flacheros_Back_Django.git
 cd Cerveceria_Flacheros_Back_Django
 
-# 2. Crear el archivo de entorno
-cp .env.example .env          # PowerShell: Copy-Item .env.example .env
+# Crear el archivo de variables de entorno
+cp .env.example .env
 
-# 3. Instalar dependencias
+# Instalar dependencias
 uv sync
 
-# 4. Migrar
+# Aplicar migraciones
 uv run python manage.py migrate
 
-# 5. Cargar datos de demostración
+# Cargar datos de demostración
 uv run python manage.py seed_demo
 
-# 6. Levantar el servidor
+# Iniciar el servidor
 uv run python manage.py runserver
 ```
 
-- Bienvenida: <http://127.0.0.1:8000/>
-- Admin: <http://127.0.0.1:8000/admin/>
-- Swagger: <http://127.0.0.1:8000/api/docs/>
+En Windows PowerShell, la copia del archivo de entorno se realiza con:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+El servidor local queda disponible en `http://127.0.0.1:8000`.
+
+### Instalación mediante pip
+
+También se pueden instalar las dependencias desde `requirements.txt`:
+
+```bash
+python -m venv .venv
+
+# Linux / macOS
+source .venv/bin/activate
+
+# Windows PowerShell
+# .venv\Scripts\Activate.ps1
+
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py seed_demo
+python manage.py runserver
+```
 
 ### Variables de entorno
 
-`.env.example` incluye:
+Las variables principales se definen en `.env` o en el entorno de ejecución:
 
 | Variable | Descripción |
 |---|---|
-| `SECRET_KEY` | Clave secreta de Django. Obligatoria en producción. |
-| `DEBUG` | `True` en desarrollo, `False` en producción. |
-| `ALLOWED_HOSTS` | Hosts separados por coma. |
-| `DJANGO_SETTINGS_MODULE` | `config.settings.dev` o `config.settings.prod`. |
-| `DATABASE_URL` | `sqlite:///db.sqlite3` o URL de PostgreSQL. |
-| `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` | Credenciales del servicio `db`. |
-| `CORS_ALLOWED_ORIGINS` | Orígenes permitidos del frontend. |
-| `CSRF_TRUSTED_ORIGINS` | Orígenes confiables para CSRF. |
+| `SECRET_KEY` | Clave secreta de Django. Debe ser segura y mantenerse privada. |
+| `DEBUG` | Activa o desactiva el modo de depuración. |
+| `ALLOWED_HOSTS` | Hosts permitidos, separados por coma. |
+| `DJANGO_SETTINGS_MODULE` | Configuración a utilizar: `config.settings.dev` o `config.settings.prod`. |
+| `DATABASE_URL` | Conexión a la base de datos. Por defecto utiliza `sqlite:///db.sqlite3`. |
+| `POSTGRES_DB` | Nombre de la base de datos PostgreSQL utilizada por Docker Compose. |
+| `POSTGRES_USER` | Usuario de PostgreSQL utilizado por Docker Compose. |
+| `POSTGRES_PASSWORD` | Contraseña de PostgreSQL utilizada por Docker Compose. |
+| `CORS_ALLOWED_ORIGINS` | Orígenes autorizados para solicitudes CORS. |
+| `CSRF_TRUSTED_ORIGINS` | Orígenes confiables para la protección CSRF. |
 
-### Datos de demostración
+Para producción se debe utilizar `config.settings.prod`, establecer `DEBUG=False`, definir una `SECRET_KEY` segura y configurar correctamente los hosts y orígenes permitidos.
+
+## Datos de demostración
+
+El comando `seed_demo` carga registros de ejemplo para estilos, cervezas, proveedores, ingredientes, recetas, lotes, clientes, pedidos y reseñas. Es idempotente: puede ejecutarse más de una vez sin duplicar los registros de demostración.
 
 ```bash
 uv run python manage.py seed_demo
-uv run python manage.py seed_demo --reset   # borra solo datos de dominio
 ```
 
-El comando es **idempotente**: se puede ejecutar varias veces sin duplicar
-datos. Carga 6 estilos, 8 cervezas, 4 proveedores, 11 ingredientes, 8 recetas,
-8 lotes, 6 clientes, 6 pedidos y 12 reseñas. No toca usuarios, salvo el
-superusuario demo.
+Para eliminar los datos de dominio y volver a cargarlos:
 
-**Credenciales demo**
+```bash
+uv run python manage.py seed_demo --reset
+```
+
+**`--reset` elimina los registros de dominio** (reseñas, detalles de pedidos, pedidos, clientes, lotes, recetas, ingredientes, proveedores, cervezas y estilos) antes de volver a cargar los datos. No elimina los usuarios.
+
+El comando crea o actualiza el usuario administrador de demostración:
 
 | Campo | Valor |
 |---|---|
 | Email | `admin@flacheros.com` |
 | Contraseña | `admin12345` |
-| Rol de perfil | `admin` |
+| Perfil | `admin` |
+
+Estas credenciales son exclusivamente para demostración y deben cambiarse antes de utilizar el sistema en un entorno real.
 
 ## Docker
 
+El proyecto incluye `Dockerfile` y `docker-compose.yml`. Docker Compose inicia PostgreSQL 16 y el backend Django.
+
+Configurar las variables necesarias en `.env` y ejecutar:
+
 ```bash
-cp .env.example .env          # PowerShell: Copy-Item .env.example .env
-# Editar SECRET_KEY y, si hace falta, POSTGRES_* y ALLOWED_HOSTS
 docker compose up --build
 ```
 
-> Si el daemon de Docker no está corriendo, `docker compose config` permite
-> validar la configuración sin levantar los contenedores.
+El contenedor del backend realiza las migraciones, recopila los archivos estáticos y carga los datos de demostración antes de iniciar Gunicorn.
 
-El compose levanta:
+Servicios:
 
-- `db`: PostgreSQL 16 con volumen persistente y healthcheck.
-- `web`: Django con Gunicorn, migraciones y `collectstatic` automáticos en el
-  entrypoint (`docker/entrypoint.sh`).
+- Backend: `http://localhost:8000`
+- Administración: `http://localhost:8000/admin/`
+- Swagger: `http://localhost:8000/api/docs/`
+- PostgreSQL: servicio interno `db`, puerto `5432`.
 
-El compose fuerza `DEBUG=False` y
-`DJANGO_SETTINGS_MODULE=config.settings.prod`; las migraciones y
-`collectstatic` corren solas en el entrypoint.
+Los datos de PostgreSQL se conservan en el volumen `postgres_data` y los archivos estáticos en `staticfiles`.
 
-Variables principales: `SECRET_KEY` (obligatoria), `POSTGRES_*`,
-`ALLOWED_HOSTS`, `CORS_ALLOWED_ORIGINS` y `CSRF_TRUSTED_ORIGINS`. La URL de
-base se construye como
-`postgres://<user>:<password>@db:5432/<database>`.
+## Despliegue en Render
 
-## Tests
+El backend está publicado en [Render](https://cerveceria-flacheros-back-django-1.onrender.com/). El repositorio incluye `render.yaml` con la configuración de un servicio web Python y una base PostgreSQL. Los enlaces públicos a la API, Swagger, OpenAPI y ReDoc se encuentran en la sección [Proyecto publicado](#proyecto-publicado).
+
+La configuración establece:
+
+- `config.settings.prod` como módulo de configuración.
+- `DEBUG=False`.
+- Generación de `SECRET_KEY`.
+- Conexión a PostgreSQL mediante `DATABASE_URL`.
+- Instalación de dependencias desde `requirements.txt`.
+- Ejecución de `bash bash.sh`, que aplica migraciones, ejecuta `collectstatic` e inicia Gunicorn.
+- `/api/schema/` como ruta de verificación de estado.
+
+Los dominios permitidos y los orígenes CORS/CSRF deben coincidir con los dominios reales del backend y del frontend.
+
+## Pruebas automatizadas
+
+El proyecto contiene **55 pruebas automatizadas** distribuidas en las aplicaciones `cuentas`, `catalogo` y `ventas`.
+
+La cobertura incluye:
+
+- Autenticación por email, emisión y renovación de tokens, consulta del usuario autenticado y permisos sobre perfiles.
+- Operaciones CRUD, permisos, filtros, búsqueda, ordenamiento y paginación del catálogo.
+- Estadísticas de cervezas, consulta de bajo stock y validación de imágenes.
+- Proveedores, ingredientes, recetas y relaciones entre recetas e ingredientes.
+- Lotes de producción y acción de finalización.
+- Clientes, pedidos, detalles, recálculo de totales, cambios de estado y reseñas.
+
+Ejecutar las pruebas con:
 
 ```bash
 uv run python manage.py test -v 2
 ```
 
-La batería tiene **39 tests** con `APITestCase` y base de datos real (sin
-mocks). Cubre:
-
-- Autenticación: token por email, password incorrecta, `me` con/sin token,
-  perfiles propios vs. ajenos y visibilidad para staff.
-- Cervezas: listado paginado, `estilo` string en list/detalle y
-  `estilo_detalle` anidado solo en list, payload del front con `color: ""` e
-  `imagen: ""`, permisos de escritura, CRUD, búsqueda, filtro por estilo,
-  ordering, `page_size`, estadísticas y bajo stock (incluido umbral inválido).
-- Catálogo: estilos públicos, proveedores con/sin token, ingredientes bajo
-  mínimo, recetas anidadas en list y planas en detalle, lotes anidados,
-  `finalizar` y CRUD de reseñas.
-- Ventas: pedidos anidados en list vs. planos en detalle, cambio de estado
-  válido/inválido, recálculo del total al crear un detalle y clientes con/sin
-  token.
-- Admin: smoke test de `/admin/` y de los changelists de los 11 modelos de
-  dominio con superusuario.
-
 ## Panel de administración
 
-URL: <http://127.0.0.1:8000/admin/>. Credenciales demo:
-`admin@flacheros.com` / `admin12345`.
+El panel de Django se encuentra en `/admin/`. Permite administrar los modelos del sistema y cuenta con filtros, búsqueda, ordenamiento y vistas de relaciones.
 
-| Modelo | Filtros | Búsqueda | Orden |
-|---|---|---|---|
-| Estilo | `creado_en` | nombre, slug, descripción | nombre |
-| Cerveza | estilo, activo | nombre, estilo, descripción | nombre |
-| Proveedor | activo | nombre, contacto, email, CUIT | nombre |
-| Ingrediente | tipo, unidad, proveedor | nombre, proveedor | nombre |
-| Receta | activa, estilo de cerveza | nombre, cerveza | cerveza, -versión |
-| RecetaIngrediente | unidad, cerveza de la receta | receta, ingrediente | receta, ingrediente |
-| Lote | estado, estilo de cerveza | código, cerveza, receta | -fecha de elaboración |
-| Cliente | tipo, activo | nombre, email, teléfono | nombre |
-| Pedido | estado, canal, fecha | cliente, email, notas | -fecha del pedido |
-| DetallePedido | estilo de cerveza | pedido, cerveza | pedido, cerveza |
-| Reseña | puntuación, estilo | cerveza, cliente, comentario | -creado en |
-| Usuario | — | email, nombre, apellido | email |
-| PerfilUsuario | rol | email, teléfono | email |
+| Modelo | Funcionalidades de administración |
+|---|---|
+| Estilo | Filtro por fecha; búsqueda por nombre, slug y descripción. |
+| Cerveza | Filtros por estilo y estado; búsqueda por nombre, estilo y descripción; edición en línea de precio, stock y estado. |
+| Proveedor | Filtro por estado; búsqueda por nombre, contacto, email y CUIT. |
+| Ingrediente | Filtros por tipo, unidad y proveedor; búsqueda por nombre y proveedor. |
+| Receta | Filtros por estado y estilo de cerveza; incluye ingredientes relacionados. |
+| RecetaIngrediente | Filtros por unidad y cerveza de la receta. |
+| Lote | Filtros por estado y estilo de cerveza; búsqueda por código, cerveza y receta. |
+| Cliente | Filtros por tipo y estado; búsqueda por nombre, email y teléfono. |
+| Pedido | Filtros por estado, canal y fecha; búsqueda por cliente, email y notas. |
+| DetallePedido | Filtro por estilo de cerveza; búsqueda por pedido y cerveza. |
+| Reseña | Filtros por puntuación y estilo; búsqueda por cerveza, cliente y comentario. |
+| Usuario | Búsqueda por email, nombre y apellido. |
+| PerfilUsuario | Filtro por rol; búsqueda por email y teléfono. |
 
-Cerveza permite edición en línea de `precio`, `stock` y `activo`. Pedido
-muestra `total` y `cantidad_items` como campos calculados de solo lectura.
-Receta y Pedido incluyen inlines de sus ingredientes y detalles,
-respectivamente.
+Los pedidos muestran el total y la cantidad de artículos como campos calculados de solo lectura. Las recetas y los pedidos permiten administrar sus relaciones mediante formularios inline.
 
-## Integración con el frontend Next.js
+## Integración con Next.js
 
-En el `.env.local` del frontend:
+En el archivo `.env.local` del frontend:
 
 ```env
 NEXT_PUBLIC_USE_MOCK=false
 NEXT_PUBLIC_API_URL=http://localhost:8000/api/
 ```
 
-El backend ya permite los orígenes de desarrollo:
+Para el entorno local, el backend contempla los orígenes de desarrollo:
 
 ```env
 CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 CSRF_TRUSTED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 ```
 
-Flujo recomendado:
+Flujo de autenticación desde el frontend:
 
-1. `POST /api/token/` con `{email, password}`.
-2. Guardar `access` y `refresh`.
-3. Enviar `Authorization: Bearer <access>` en cada request privada.
-4. Ante un `401`, renovar con `POST /api/token/refresh/`.
-5. Respetar la paginación `{count, next, previous, results}` y los errores
-   por campo de DRF (`{"campo": ["mensaje"]}`).
+1. Enviar `POST /api/token/` con `email` y `password`.
+2. Conservar los tokens `access` y `refresh`.
+3. Enviar `Authorization: Bearer <access>` en las solicitudes privadas.
+4. Cuando el token de acceso expire, solicitar uno nuevo mediante `POST /api/token/refresh/`.
+5. Procesar la paginación mediante `count`, `next`, `previous` y `results`.
 
-Contrato diferencial:
-
-- `GET /api/cervezas/` → `estilo` es un **string slug** (`"pilsner"`, `"ipa"`,
-  etc.) y `estilo_detalle` es el objeto anidado con `slug`, `nombre`, etc.
-- `GET /api/cervezas/{id}/` → `estilo` es un **string slug**; no incluye
-  `estilo_detalle`.
-- `GET /api/pedidos/` → `cliente` y `detalles` anidados.
-- `GET /api/pedidos/{id}/` → `cliente` es un **id** y no incluye `detalles`.
-
-> **Compatibilidad con el front:** `estilo` siempre es string en el catálogo.
-> Usar `estilo_detalle` solo si se necesita el objeto completo en el listado.
-
-## Checklist de requisitos de la cátedra
-
-| Requisito | Dónde se cumple |
-|---|---|
-| 10+ modelos | 11 modelos de dominio + `Usuario` y `PerfilUsuario`. |
-| 8+ viewsets | 11 viewsets registrados en `config/api_urls.py`. |
-| 2+ serializers anidados solo en list | Ingredientes, recetas, lotes, pedidos, reseñas y cervezas (`estilo_detalle`). |
-| 2+ `@action` | `estadisticas`, `bajo-stock`, `finalizar` y `cambiar-estado`. |
-| Auth por sesión y por token | `SessionAuthentication` + SimpleJWT; admin y API navegable. |
-| Paginación | `PaginacionEstandar` con `page` y `page_size`. |
-| Filtros | `django-filter` en catálogo y ventas. |
-| Búsqueda y ordering | `SearchFilter` y `OrderingFilter` por recurso. |
-| Documentación | `/api/schema/`, `/api/docs/` y `/api/redoc/`. |
-| Vista template | `/` con `templates/bienvenida.html`. |
-| Admin completo | 11 modelos de dominio + usuarios y perfiles, con filtros, búsqueda, orden e inlines. |
-| uv | `pyproject.toml`, `uv.lock` y comandos con `uv run`. |
-| CORS | `django-cors-headers` y orígenes configurables. |
-| Docker | `Dockerfile`, `docker-compose.yml` y `docker/entrypoint.sh`. |
-| Tests | 39 tests con `APITestCase` y base real. |
-| Datos demo | `python manage.py seed_demo` idempotente. |
-
-## Flujo de Git sugerido
-
-El repositorio lo administra el grupo. Se sugiere:
-
-- `main` estable y protegida; cada feature en una rama
-  `feature/<tema>` (por ejemplo `feature/seed-demo`,
-  `feature/tests-api`, `feature/readme`).
-- Commits con convención: `feat:`, `fix:`, `test:`, `docs:`, `chore:`.
-- Pull Request hacia `main` con descripción, checklist y revisión de al menos
-  un integrante.
-- Mantener `uv.lock` versionado y ejecutar `uv run python manage.py test`
-  antes de abrir el PR.
-- No commitear `.env`, `db.sqlite3`, `staticfiles/` ni `media/`.
-
-> Esta entrega no ejecutó comandos git; los cambios quedan en el árbol de
-> trabajo para que el grupo los revise y versione.
+En el catálogo, el campo `estilo` se representa mediante el slug. En el listado de cervezas también se incluye `estilo_detalle` con la información del estilo. En el detalle de un pedido, `cliente` se representa mediante su identificador y no se incluye el arreglo `detalles`, que sí está disponible en el listado.
 
 ## Capturas
 
-Las capturas se generaron contra el entorno local con `seed_demo`.
-
-### Portada
+### Sitio público
 
 ![Portada del sitio](docs/capturas/portada.png)
 
-### Swagger UI
+### Documentación de la API
 
 ![Swagger UI](docs/capturas/swagger.png)
 
-### Admin de Django
+### Administración de Django
 
-![Login del admin](docs/capturas/admin.png)
+![Login del administrador](docs/capturas/admin.png)
 
-![Dashboard del admin autenticado](docs/capturas/admin_panel.png)
+![Panel de administración](docs/capturas/admin_panel.png)
 
-### Admin de cervezas
+### Administración de cervezas
 
-![Changelist de cervezas con filtros, búsqueda y edición en línea](docs/capturas/admin_cervezas.png)
+![Listado de cervezas en el administrador](docs/capturas/admin_cervezas.png)
 
-### Listado de la API
+### API navegable
 
-![Listado de cervezas en la API navegable](docs/capturas/api_listado.png)
+![Listado de cervezas en la API](docs/capturas/api_listado.png)
 
-### Serialización anidada en list
+### Relaciones anidadas
 
-![Recetas con cerveza e ingredientes anidados](docs/capturas/api_recetas_nested.png)
+![Recetas con cerveza e ingredientes relacionados](docs/capturas/api_recetas_nested.png)
 
-## Estructura de carpetas
+## Estructura del proyecto
 
 ```text
 .
@@ -602,65 +628,62 @@ Las capturas se generaron contra el entorno local con `seed_demo`.
 │   │   ├── models.py
 │   │   └── pagination.py
 │   ├── cuentas/
+│   │   ├── migrations/
+│   │   ├── tests/test_auth.py
+│   │   ├── admin.py
 │   │   ├── models.py
 │   │   ├── serializers.py
-│   │   ├── views.py
-│   │   └── tests/
+│   │   ├── signals.py
+│   │   └── views.py
 │   ├── catalogo/
+│   │   ├── migrations/
+│   │   ├── tests/
+│   │   ├── admin.py
+│   │   ├── filters.py
 │   │   ├── models.py
 │   │   ├── serializers.py
-│   │   ├── filters.py
-│   │   ├── views.py
-│   │   └── tests/
+│   │   ├── signals.py
+│   │   └── views.py
 │   └── ventas/
+│       ├── migrations/
+│       ├── tests/test_pedidos.py
+│       ├── admin.py
+│       ├── filters.py
 │       ├── models.py
 │       ├── serializers.py
-│       ├── filters.py
-│       ├── views.py
-│       └── tests/
+│       └── views.py
 ├── config/
+│   ├── settings/
+│   │   ├── base.py
+│   │   ├── dev.py
+│   │   └── prod.py
 │   ├── api_urls.py
 │   ├── urls.py
-│   └── settings/
-│       ├── base.py
-│       ├── dev.py
-│       └── prod.py
-├── docker/entrypoint.sh
-├── templates/bienvenida.html
-├── docker-compose.yml
+│   ├── asgi.py
+│   └── wsgi.py
+├── docker/
+│   └── entrypoint.sh
+├── docs/capturas/
+├── templates/
+│   └── bienvenida.html
+├── .env.example
 ├── Dockerfile
+├── docker-compose.yml
 ├── manage.py
 ├── pyproject.toml
-├── uv.lock
-└── README.md
+├── render.yaml
+├── requirements.txt
+└── uv.lock
 ```
 
-## Decisiones técnicas relevantes
+## Decisiones técnicas
 
-- **Usuario custom por email**: `Usuario` redefine `USERNAME_FIELD = "email"`,
-  usa un manager propio y crea el `PerfilUsuario` automáticamente por signal.
-  SimpleJWT toma el email como credencial.
-- **`estilo` string slug + `estilo_detalle`**: `estilo` es siempre un string
-  (`"ipa"`) tanto en list como en detalle, para que el catálogo del front no
-  se rompa. En list se agrega `estilo_detalle` con el objeto completo para
-  cumplir el requisito de datos anidados sin duplicar la lógica de escritura.
-- **Total calculado**: `Pedido.total` se recalcula desde los detalles
-  (`recalcular_total`) al crear, editar o borrar una línea. En la API es de
-  solo lectura para no aceptar totales inconsistentes.
-- **`imagen` como URL**: el modelo usa `URLField`; no se suben archivos. El
-  front consume la URL directamente.
-- **`precio_unitario` opcional**: si no se envía al crear un detalle, el
-  modelo toma `cerveza.precio`; el subtotal se calcula solo.
-- **Consultas optimizadas**: `select_related` y `prefetch_related` en los
-  viewsets, más `annotate` para contadores (`resenas_count`,
-  `cervezas_count`, `ingredientes_count`, `pedidos_count`,
-  `detalles_count`).
-- **Permisos**: catálogo público de solo lectura con
-  `IsAuthenticatedOrReadOnly`; el resto requiere `IsAuthenticated`.
-- **Schema limpio**: `ENUM_NAME_OVERRIDES` evita colisiones entre los enums
-  `estado` y `tipo`; las actions y `MeView` están documentadas con
-  `@extend_schema`.
-- **Seed idempotente**: `update_or_create`/`get_or_create` y `--reset` seguro
-  para datos de dominio, sin tocar usuarios.
-
-
+- **Usuario personalizado:** el modelo `Usuario` utiliza el email como identificador de autenticación y elimina el campo `username`.
+- **Perfil asociado:** cada usuario dispone de un perfil relacionado mediante una relación uno a uno.
+- **Estilo de cerveza:** la API utiliza el slug del estilo en el campo `estilo`; el listado agrega `estilo_detalle` para exponer la información relacionada.
+- **Total de pedidos:** el total se calcula a partir de los detalles y se actualiza al crear, modificar o eliminar una línea del pedido. El campo `total` es de solo lectura en la API.
+- **Imágenes:** las cervezas pueden utilizar una URL externa o una imagen almacenada por el backend.
+- **Consultas:** los viewsets utilizan `select_related`, `prefetch_related` y anotaciones para recuperar relaciones y contadores.
+- **Permisos:** estilos y cervezas permiten lectura pública; las operaciones de escritura requieren autenticación. Los demás recursos requieren autenticación.
+- **Documentación API:** el esquema OpenAPI se genera con drf-spectacular.
+- **Datos de demostración:** `seed_demo` utiliza operaciones de actualización o creación para mantener una carga idempotente.
