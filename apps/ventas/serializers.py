@@ -5,6 +5,7 @@ from decimal import Decimal
 from rest_framework import serializers
 
 from apps.catalogo.serializers import CervezaResumenSerializer
+from apps.cuentas.permissions import ROL_CLIENTE, rol_de
 
 from .models import Cliente, DetallePedido, Pedido, Resena
 
@@ -66,6 +67,10 @@ class DetallePedidoSerializer(serializers.ModelSerializer):
 
 
 class PedidoSerializer(serializers.ModelSerializer):
+    cliente = serializers.PrimaryKeyRelatedField(
+        queryset=Cliente.objects.all(),
+        required=False,
+    )
     cliente_nombre = serializers.CharField(
         source="cliente.nombre",
         read_only=True,
@@ -98,6 +103,15 @@ class PedidoSerializer(serializers.ModelSerializer):
             "detalles_count",
         )
         read_only_fields = ("total", "cantidad_items", "detalles_count")
+
+    def validate(self, attrs):
+        if self.instance is None and not attrs.get("cliente"):
+            request = self.context.get("request")
+            if request is None or rol_de(request.user) != ROL_CLIENTE:
+                raise serializers.ValidationError(
+                    {"cliente": ["Este campo es obligatorio."]}
+                )
+        return attrs
 
 
 class PedidoListSerializer(PedidoSerializer):

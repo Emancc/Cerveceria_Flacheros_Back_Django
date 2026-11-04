@@ -1,9 +1,17 @@
 """Configuración para producción."""
 
+from django.core.exceptions import ImproperlyConfigured
+
 from .base import *  # noqa: F403
-from .base import env
+from .base import CLOUDINARY_URL, USE_CLOUDINARY, env
 
 DEBUG = False
+
+if USE_CLOUDINARY and not CLOUDINARY_URL:
+    raise ImproperlyConfigured(
+        "USE_CLOUDINARY está activo pero falta CLOUDINARY_URL. "
+        "Configurá la variable de entorno en Render."
+    )
 
 # En producción SECRET_KEY es obligatoria: si falta, django-environ lanza
 # ImproperlyConfigured y el proceso no arranca.

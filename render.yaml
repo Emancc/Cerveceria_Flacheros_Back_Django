@@ -31,3 +31,7 @@ services:
         value: https://cervecerialf.vercel.app
       - key: CSRF_TRUSTED_ORIGINS
         value: https://cervecerialf.vercel.app
+      - key: USE_CLOUDINARY
+        value: "true"
+      - key: CLOUDINARY_URL
+        sync: false

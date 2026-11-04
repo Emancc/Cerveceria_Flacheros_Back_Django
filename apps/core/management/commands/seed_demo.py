@@ -590,6 +590,7 @@ class Command(BaseCommand):
             if options["reset"]:
                 self._reset()
             self._crear_admin()
+            self._crear_cliente_demo()
             estilos = self._crear_estilos()
             cervezas = self._crear_cervezas(estilos)
             proveedores = self._crear_proveedores()
@@ -640,6 +641,38 @@ class Command(BaseCommand):
                 "rol": PerfilUsuario.Rol.ADMIN,
                 "telefono": "+54 351 555-0100",
                 "bio": "Administrador de demostración de la Cervecería Los Flacheros.",
+            },
+        )
+
+    def _crear_cliente_demo(self):
+        usuario, _ = Usuario.objects.update_or_create(
+            email="cliente@flacheros.com",
+            defaults={
+                "first_name": "Cliente",
+                "last_name": "Demo",
+                "is_staff": False,
+                "is_superuser": False,
+                "is_active": True,
+            },
+        )
+        usuario.set_password("cliente12345")
+        usuario.save()
+        PerfilUsuario.objects.update_or_create(
+            usuario=usuario,
+            defaults={
+                "rol": PerfilUsuario.Rol.CLIENTE,
+                "telefono": "+54 351 555-0200",
+                "bio": "Cliente de demostración para comprar desde la tienda.",
+            },
+        )
+        Cliente.objects.update_or_create(
+            email="cliente@flacheros.com",
+            defaults={
+                "nombre": "Cliente Demo",
+                "telefono": "+54 351 555-0200",
+                "tipo": Cliente.Tipo.MINORISTA,
+                "direccion": "Av. Colón 100, Córdoba",
+                "activo": True,
             },
         )
 

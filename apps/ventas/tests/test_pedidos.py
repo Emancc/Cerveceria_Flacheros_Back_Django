@@ -8,6 +8,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from apps.catalogo.models import Cerveza, Estilo
+from apps.cuentas.models import PerfilUsuario
 from apps.ventas.models import Cliente, DetallePedido, Pedido
 
 Usuario = get_user_model()
@@ -19,6 +20,10 @@ class PedidoAPITests(APITestCase):
         cls.usuario = Usuario.objects.create_user(
             email="ventas@example.com",
             password="ClaveSegura123",
+        )
+        PerfilUsuario.objects.update_or_create(
+            usuario=cls.usuario,
+            defaults={"rol": PerfilUsuario.Rol.VENTAS},
         )
         cls.estilo = Estilo.objects.create(
             nombre="IPA",

@@ -17,6 +17,7 @@ from apps.catalogo.models import (
     Receta,
     RecetaIngrediente,
 )
+from apps.cuentas.models import PerfilUsuario
 from apps.ventas.models import Cliente, Resena
 
 Usuario = get_user_model()
@@ -28,6 +29,10 @@ class CatalogoAPITests(APITestCase):
         cls.usuario = Usuario.objects.create_user(
             email="catalogo@example.com",
             password="ClaveSegura123",
+        )
+        PerfilUsuario.objects.update_or_create(
+            usuario=cls.usuario,
+            defaults={"rol": PerfilUsuario.Rol.ADMIN},
         )
         cls.estilo = Estilo.objects.create(
             nombre="IPA",

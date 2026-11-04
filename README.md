@@ -34,6 +34,7 @@ documentación OpenAPI.
 | django-filter | 26.2 | Filtros de querystring |
 | django-cors-headers | 4.9.0 | CORS para el frontend |
 | django-environ | 0.14.0 | Variables de entorno |
+| Cloudinary | 1.46.3 | Persistencia de imágenes en producción |
 | psycopg | 3.3.6 | Driver PostgreSQL |
 | Gunicorn | 26.2.0 | Servidor WSGI de producción |
 | WhiteNoise | 6.12.0 | Archivos estáticos en producción |
@@ -390,6 +391,48 @@ uv run python manage.py runserver
 | `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` | Credenciales del servicio `db`. |
 | `CORS_ALLOWED_ORIGINS` | Orígenes permitidos del frontend. |
 | `CSRF_TRUSTED_ORIGINS` | Orígenes confiables para CSRF. |
+| `USE_CLOUDINARY` | `True` en producción para subir imágenes a Cloudinary; `False` en desarrollo/tests. |
+| `CLOUDINARY_URL` | Credencial `cloudinary://API_KEY:API_SECRET@CLOUD_NAME`. Solo si `USE_CLOUDINARY=True`. |
+
+### Imágenes en Cloudinary
+
+En desarrollo y tests las imágenes se guardan en `media/` y se referencia la
+ruta relativa en `imagen_archivo`. En producción, Render no tiene disco
+persistente, así que con `USE_CLOUDINARY=True` el endpoint
+`POST /api/cervezas/imagenes/` sube el archivo a Cloudinary y devuelve
+`{ ruta: "", url: secure_url }`. El front guarda esa URL en `imagen`.
+
+Configuración en Render:
+
+1. Crear una cuenta en Cloudinary y copiar el **API environment variable**
+   (`CLOUDINARY_URL=cloudinary://API_KEY:API_SECRET@CLOUD_NAME`).
+2. En Render → Environment agregar:
+   - `USE_CLOUDINARY=true`
+   - `CLOUDINARY_URL=<credencial>` (como secreto)
+3. Redeploy. No hay migraciones nuevas.
+
+Para migrar imágenes locales existentes o limpiar referencias a archivos que
+ya no existen en Render:
+
+```bash
+uv run python manage.py migrar_imagenes_cloudinary          # dry-run
+uv run python manage.py migrar_imagenes_cloudinary --apply  # aplica
+```
+
+El comando sube a Cloudinary los archivos locales que todavía existan, guarda
+la URL en `imagen` y limpia `imagen_archivo`. Si el archivo ya no existe, solo
+limpia la referencia para que se use la URL externa o el placeholder.
+
+En Render, ejecutá el comando desde la **Shell** del servicio:
+
+```bash
+python manage.py migrar_imagenes_cloudinary          # dry-run
+python manage.py migrar_imagenes_cloudinary --apply  # aplica
+```
+
+Las imágenes reemplazadas o eliminadas desde el panel no se borran
+automáticamente de Cloudinary; se pueden administrar desde la consola de
+Cloudinary.
 
 ### Datos de demostración
 
@@ -443,8 +486,8 @@ base se construye como
 uv run python manage.py test -v 2
 ```
 
-La batería tiene **39 tests** con `APITestCase` y base de datos real (sin
-mocks). Cubre:
+La batería tiene **84 tests** con `APITestCase` y base de datos real (con mocks
+puntuales para la subida a Cloudinary). Cubre:
 
 - Autenticación: token por email, password incorrecta, `me` con/sin token,
   perfiles propios vs. ajenos y visibilidad para staff.
@@ -460,6 +503,8 @@ mocks). Cubre:
   token.
 - Admin: smoke test de `/admin/` y de los changelists de los 11 modelos de
   dominio con superusuario.
+- Imágenes: subida local, validación de formato/peso/dimensiones, subida a
+  Cloudinary mockeada y comando de migración `migrar_imagenes_cloudinary`.
 
 ## Panel de administración
 
@@ -542,7 +587,7 @@ Contrato diferencial:
 | uv | `pyproject.toml`, `uv.lock` y comandos con `uv run`. |
 | CORS | `django-cors-headers` y orígenes configurables. |
 | Docker | `Dockerfile`, `docker-compose.yml` y `docker/entrypoint.sh`. |
-| Tests | 39 tests con `APITestCase` y base real. |
+| Tests | 84 tests con `APITestCase` y base real. |
 | Datos demo | `python manage.py seed_demo` idempotente. |
 
 ## Flujo de Git sugerido
@@ -607,9 +652,11 @@ Las capturas se generaron contra el entorno local con `seed_demo`.
 │   │   ├── views.py
 │   │   └── tests/
 │   ├── catalogo/
+│   │   ├── management/commands/migrar_imagenes_cloudinary.py
 │   │   ├── models.py
 │   │   ├── serializers.py
 │   │   ├── filters.py
+│   │   ├── imagenes.py
 │   │   ├── views.py
 │   │   └── tests/
 │   └── ventas/
@@ -647,8 +694,11 @@ Las capturas se generaron contra el entorno local con `seed_demo`.
 - **Total calculado**: `Pedido.total` se recalcula desde los detalles
   (`recalcular_total`) al crear, editar o borrar una línea. En la API es de
   solo lectura para no aceptar totales inconsistentes.
-- **`imagen` como URL**: el modelo usa `URLField`; no se suben archivos. El
-  front consume la URL directamente.
+- **Imágenes de cerveza**: en desarrollo se suben a `media/` y se guarda la
+  ruta relativa en `imagen_archivo`. En producción, con
+  `USE_CLOUDINARY=True`, se suben a Cloudinary y se guarda la `secure_url` en
+  `imagen`. El endpoint `POST /api/cervezas/imagenes/` mantiene el contrato
+  `{ ruta, url }` en ambos modos.
 - **`precio_unitario` opcional**: si no se envía al crear un detalle, el
   modelo toma `cerveza.precio`; el subtotal se calcula solo.
 - **Consultas optimizadas**: `select_related` y `prefetch_related` en los

@@ -143,6 +143,13 @@ STORAGES = {
 }
 
 # ---------------------------------------------------------------------------
+# Imágenes en Cloudinary (solo producción)
+# ---------------------------------------------------------------------------
+# En desarrollo/tests queda desactivado y se sigue usando MEDIA_ROOT.
+USE_CLOUDINARY = env.bool("USE_CLOUDINARY", default=False)
+CLOUDINARY_URL = env("CLOUDINARY_URL", default="")
+
+# ---------------------------------------------------------------------------
 # CORS / CSRF
 # ---------------------------------------------------------------------------
 CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS")

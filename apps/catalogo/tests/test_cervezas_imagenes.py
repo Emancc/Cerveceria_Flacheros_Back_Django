@@ -16,6 +16,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from apps.catalogo.models import Cerveza, Estilo
+from apps.cuentas.models import PerfilUsuario
 
 Usuario = get_user_model()
 
@@ -38,6 +39,14 @@ class ImagenesCervezaAPITests(APITestCase):
             email="staff-imagenes@example.com",
             password="ClaveSegura123",
             is_staff=True,
+        )
+        cls.cervecero = Usuario.objects.create_user(
+            email="cervecero-imagenes@example.com",
+            password="ClaveSegura123",
+        )
+        PerfilUsuario.objects.update_or_create(
+            usuario=cls.cervecero,
+            defaults={"rol": PerfilUsuario.Rol.CERVECERO},
         )
         cls.estilo = Estilo.objects.create(
             nombre="IPA",
@@ -65,7 +74,7 @@ class ImagenesCervezaAPITests(APITestCase):
         self.addCleanup(shutil.rmtree, self.media_root, ignore_errors=True)
 
     def _autenticar(self, usuario=None):
-        self.client.force_authenticate(user=usuario or self.usuario)
+        self.client.force_authenticate(user=usuario or self.cervecero)
 
     def _subir_png(self, ancho=300, alto=300):
         self._autenticar(self.staff)

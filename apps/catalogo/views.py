@@ -1,5 +1,6 @@
 """Viewsets del catálogo."""
 
+import logging
 from datetime import timedelta
 from uuid import uuid4
 
@@ -14,7 +15,13 @@ from PIL import Image, UnidentifiedImageError
 from rest_framework import filters, serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.parsers import FormParser, MultiPartParser
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticated
+
+from apps.cuentas.permissions import (
+    EsAdminOCervecero,
+    LecturaPublicaEscrituraCerveceria,
+    rol_de,
+)
 from rest_framework.response import Response
 
 from .filters import (
@@ -24,6 +31,7 @@ from .filters import (
     ProveedorFilter,
     RecetaFilter,
 )
+from .imagenes import cloudinary_activo, subir_imagen
 from .models import Cerveza, Estilo, Ingrediente, Lote, Proveedor, Receta
 from .serializers import (
     CervezaListSerializer,
@@ -45,7 +53,7 @@ class EstiloViewSet(viewsets.ModelViewSet):
         .order_by("nombre")
     )
     serializer_class = EstiloSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [LecturaPublicaEscrituraCerveceria]
     search_fields = ["nombre", "slug"]
     ordering_fields = ["nombre"]
     ordering = ["nombre"]
@@ -54,6 +62,8 @@ class EstiloViewSet(viewsets.ModelViewSet):
 PESO_MAXIMO_IMAGEN = 5 * 1024 * 1024
 EXTENSIONES_POR_FORMATO = {"JPEG": ".jpg", "PNG": ".png", "WEBP": ".webp"}
 
+logger = logging.getLogger(__name__)
+
 
 class CervezaViewSet(viewsets.ModelViewSet):
     queryset = (
@@ -61,7 +71,7 @@ class CervezaViewSet(viewsets.ModelViewSet):
         .annotate(resenas_count=Count("resenas"))
         .order_by("nombre")
     )
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [LecturaPublicaEscrituraCerveceria]
     filter_backends = [
         DjangoFilterBackend,
         filters.SearchFilter,
@@ -106,15 +116,16 @@ class CervezaViewSet(viewsets.ModelViewSet):
             201: inline_serializer(
                 name="ImagenCervezaSubida",
                 fields={
-                    "ruta": serializers.CharField(),
+                    "ruta": serializers.CharField(allow_blank=True),
                     "url": serializers.URLField(),
                 },
             ),
         },
         description=(
             "Sube una imagen de cerveza (JPEG, PNG o WEBP, hasta 5 MB y "
-            "mínimo 200x200 px). Devuelve la ruta relativa para asignarla "
-            "al campo `imagen_archivo` de una cerveza."
+            "mínimo 200x200 px). Con Cloudinary devuelve `ruta` vacía y una "
+            "URL absoluta para el campo `imagen`; en local devuelve la ruta "
+            "relativa para `imagen_archivo`."
         ),
     )
     @action(
@@ -125,7 +136,7 @@ class CervezaViewSet(viewsets.ModelViewSet):
         parser_classes=[MultiPartParser, FormParser],
     )
     def imagenes(self, request):
-        if not request.user.is_staff:
+        if rol_de(request.user) not in {"admin", "cervecero"}:
             return Response(
                 {"detail": "No tenés permisos para subir imágenes."},
                 status=status.HTTP_403_FORBIDDEN,
@@ -176,6 +187,30 @@ class CervezaViewSet(viewsets.ModelViewSet):
             )
 
         archivo.seek(0)
+        if cloudinary_activo():
+            try:
+                resultado = subir_imagen(
+                    archivo,
+                    f"cervezas/{timezone.now():%Y/%m}",
+                )
+            except Exception:
+                logger.exception("No se pudo subir la imagen a Cloudinary.")
+                return Response(
+                    {
+                        "imagen": [
+                            "No pudimos subir la imagen. Intentá de nuevo."
+                        ]
+                    },
+                    status=status.HTTP_502_BAD_GATEWAY,
+                )
+            return Response(
+                {
+                    "ruta": "",
+                    "url": resultado["secure_url"],
+                },
+                status=status.HTTP_201_CREATED,
+            )
+
         extension = EXTENSIONES_POR_FORMATO[formato]
         ruta = default_storage.save(
             f"cervezas/{timezone.now():%Y/%m}/{uuid4().hex}{extension}",
@@ -272,7 +307,7 @@ class ProveedorViewSet(viewsets.ModelViewSet):
         .order_by("nombre")
     )
     serializer_class = ProveedorSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [EsAdminOCervecero]
     filterset_class = ProveedorFilter
     search_fields = ["nombre", "contacto", "email", "cuit"]
     ordering_fields = ["nombre"]
@@ -281,7 +316,7 @@ class ProveedorViewSet(viewsets.ModelViewSet):
 
 class IngredienteViewSet(viewsets.ModelViewSet):
     queryset = Ingrediente.objects.select_related("proveedor").order_by("nombre")
-    permission_classes = [IsAuthenticated]
+    permission_classes = [EsAdminOCervecero]
     filterset_class = IngredienteFilter
     search_fields = ["nombre", "proveedor__nombre"]
     ordering_fields = ["nombre", "stock"]
@@ -300,7 +335,7 @@ class RecetaViewSet(viewsets.ModelViewSet):
         .annotate(ingredientes_count=Count("ingredientes"))
         .order_by("cerveza__nombre", "-version")
     )
-    permission_classes = [IsAuthenticated]
+    permission_classes = [EsAdminOCervecero]
     filterset_class = RecetaFilter
     search_fields = ["nombre", "cerveza__nombre"]
     ordering_fields = ["nombre", "version", "creado_en"]
@@ -316,7 +351,7 @@ class LoteViewSet(viewsets.ModelViewSet):
     queryset = Lote.objects.select_related("cerveza", "receta").order_by(
         "-fecha_elaboracion"
     )
-    permission_classes = [IsAuthenticated]
+    permission_classes = [EsAdminOCervecero]
     filterset_class = LoteFilter
     search_fields = ["codigo", "cerveza__nombre"]
     ordering_fields = ["codigo", "fecha_elaboracion", "volumen_litros", "estado"]
